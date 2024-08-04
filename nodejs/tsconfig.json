@@ -1,0 +1,32 @@
+{
+    "include": [
+        "src/**/*",
+    ],
+    "compilerOptions": {
+        "declaration": true,
+        "sourceMap": true,
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+        "noFallthroughCasesInSwitch": true,
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "paths": {
+
+        },
+        "removeComments": true,
+        "skipLibCheck": true,
+        "strictNullChecks": true,
+        "target": "ESNext",
+        "lib": [
+            "ESNext"
+        ],
+        "outDir": "build"
+    },
+    "exclude": [
+        "node_modules",
+        "src/uw/archive/**/*",
+    ],
+}
