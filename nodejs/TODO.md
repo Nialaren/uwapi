@@ -1,0 +1,12 @@
+
+- [ ] Finish all methods
+- [ ] Test all methods
+- [ ] write example bot
+- [ ] Npm package
+- [ ] Test on Windows!
+- [ ] Steam path as env?
+- [ ] better log (Pino?)
+- [ ] Gracefull end - needs polishing
+- [ ] Consider speed limitations of process comunication
+- [ ] Try again non fork approach
+- [ ] Try filter warning from `ffi-rs` lib and leave rest of logs unaffected
