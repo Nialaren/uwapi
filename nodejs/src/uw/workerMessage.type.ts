@@ -11,6 +11,16 @@ export interface IMessageBase {
     data: unknown;
 }
 
+export interface IMessageTemplate<A extends string, D> extends IMessageBase {
+    action: A;
+    data: D;
+}
+
+export interface IMessageFromApi<K extends keyof IUWApi> extends IMessageBase {
+    action: K;
+    data: IUWApi[K] extends Function ? [ReturnType<IUWApi[K]>] : never;
+}
+
 export interface ITestMessage extends IMessageBase {
     action: 'test';
     data: {
@@ -94,6 +104,14 @@ export type UwWorkerMessage =
     | IShootingCallbackMessage
 
     // Messages with return
+    | IMessageFromApi<'uwMapState'>
+    | IMessageFromApi<'uwConnectionState'>
+    | IMessageFromApi<'uwOrders'>
+    // prototypes
+    | IMessageFromApi<'uwAllPrototypes'>
+    | IMessageFromApi<'uwDefinitionsJson'>
+
+    // Connection
     | IUwTryReconnectMessage
     | IUwMyPlayerMessage
     | IUwModifiedEntititesMessage

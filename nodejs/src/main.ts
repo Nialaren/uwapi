@@ -6,10 +6,14 @@ const STEAM_PATH = '/home/fisa/.local/share/Steam/steamapps/common/Unnatural Wor
 
 
 function tickCallbackClosure(game: uw.Game) {
-    const tickCallback: UpdateCallbackType = (stepping) => {
+    const tickCallback: UpdateCallbackType = async (stepping) => {
 
         if (game.tick() % 100 == 0) {
             console.log(`${game.tick()} Alive ${stepping}`);
+        }
+
+        if (game.tick() % 100 === 0) {
+            // console.log(await game.testModifiedEntities());
         }
         // console.log(game.tick());
     }
@@ -91,7 +95,7 @@ async function main() {
 
     // game.setPlayerColor(0, 1.0, 0);
 
-    game.setUpdateCallback(tickCallbackClosure(game));
+    game.addUpdateCallback(tickCallbackClosure(game));
 
     console.log('ALL DOWN');
 

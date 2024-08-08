@@ -52,6 +52,11 @@ export enum OrderPriority {
     Repeat = 1 << 3,
 }
 
+export enum Priority {
+    Disabled = 0,
+    Normal = 1,
+    High = 2,
+}
 
 export enum Prototype {
     NONE = 0,
