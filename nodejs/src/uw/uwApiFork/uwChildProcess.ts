@@ -167,7 +167,7 @@ function initCallback(initMessage: IInitMessage) {
                     }
                     case 'uwMyPlayer': {
                         const asyncFn = async () => {
-                            const result = await api.uwConnectFindLan.apply(api, parameters);
+                            const result = await api.uwMyPlayer.apply(api, parameters);
 
                             sendToParent({
                                 action: methodName,
@@ -179,7 +179,109 @@ function initCallback(initMessage: IInitMessage) {
                     }
                     case 'uwModifiedEntities': {
                         const asyncFn = async () => {
-                            const result = await api.uwConnectFindLan.apply(api, parameters);
+                            const result = await api.uwModifiedEntities.apply(api, parameters);
+
+                            sendToParent({
+                                action: methodName,
+                                data: [result],
+                            });
+                        };
+                        asyncFn();
+                        break;
+                    }
+
+                    case 'uwMapState': {
+                        const asyncFn = async () => {
+                            const result = await api.uwMapState.apply(api, parameters);
+
+                            sendToParent({
+                                action: methodName,
+                                data: [result],
+                            });
+                        };
+                        asyncFn();
+                        break;
+                    }
+
+                    case 'uwConnectionState': {
+                        const asyncFn = async () => {
+                            const result = await api.uwConnectionState.apply(api, parameters);
+
+                            sendToParent({
+                                action: methodName,
+                                data: [result],
+                            });
+                        };
+                        asyncFn();
+                        break;
+                    }
+                    case 'uwOrders': {
+                        const asyncFn = async () => {
+                            const result = await api[methodName].apply(api, parameters);
+
+                            sendToParent({
+                                action: methodName,
+                                data: [result],
+                            });
+                        };
+                        asyncFn();
+                        break;
+                    }
+                    case 'uwOrder': {
+                        api[methodName].apply(api, parameters);
+                        break;
+                    }
+                    case 'uwCommandSelfDestruct': {
+                        api[methodName].apply(api, parameters);
+                        break;
+                    }
+                    case 'uwCommandPlaceConstruction': {
+                        api[methodName].apply(api, parameters);
+                        break;
+                    }
+                    case 'uwCommandSetRecipe': {
+                        api[methodName].apply(api, parameters);
+                        break;
+                    }
+                    case 'uwCommandLoad': {
+                        api[methodName].apply(api, parameters);
+                        break;
+                    }
+                    case 'uwCommandUnload': {
+                        api[methodName].apply(api, parameters);
+                        break;
+                    }
+                    case 'uwCommandMove': {
+                        api[methodName].apply(api, parameters);
+                        break;
+                    }
+                    case 'uwCommandAim': {
+                        api[methodName].apply(api, parameters);
+                        break;
+                    }
+                    case 'uwCommandRenounceControl': {
+                        api[methodName].apply(api, parameters);
+                        break;
+                    }
+                    case 'uwCommandSetPriority': {
+                        api[methodName].apply(api, parameters);
+                        break;
+                    }
+                    case 'uwAllPrototypes': {
+                        const asyncFn = async () => {
+                            const result = await api[methodName].apply(api, parameters);
+
+                            sendToParent({
+                                action: methodName,
+                                data: [result],
+                            });
+                        };
+                        asyncFn();
+                        break;
+                    }
+                    case 'uwDefinitionsJson': {
+                        const asyncFn = async () => {
+                            const result = await api[methodName].apply(api, parameters);
 
                             sendToParent({
                                 action: methodName,
