@@ -2,8 +2,17 @@ import type {
     ConnectionState,
     GameState,
     MapState,
+    OrderPriority,
+    OrderType,
+    Prototype,
     Severity,
 } from './helpers';
+
+export interface IUwProtoGeneric {
+    type: Prototype;
+    name: string;
+    json: any;
+}
 
 export interface IUWLogData {
     message: string;
@@ -62,3 +71,9 @@ export interface IUwMyPlayer {
 
 
 
+export interface IUwOrder {
+    entity: number;
+    position: number;
+    order: OrderType;
+    priority: OrderPriority;
+}

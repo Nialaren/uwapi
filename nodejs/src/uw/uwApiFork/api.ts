@@ -5,7 +5,7 @@ import {
     UW_VERSION,
 } from '../uwApiFFIRs/uwApiFFIRS';
 import { UwWorkerMessage } from '../workerMessage.type';
-import { UnregisterUwCallback } from '../types';
+import { IUwOrder, UnregisterUwCallback } from '../types';
 import { Severity } from '../helpers';
 import { IInitMessage } from './message.type';
 
@@ -25,6 +25,9 @@ async function createUWApi(
 
     childProcess.on('error', (error) => {
         console.error('SHIT HAPPENS', error);
+
+        childProcess.kill();
+        process.exit();
     });
 
     childProcess.on('exit', (exitCode) => {
@@ -164,6 +167,31 @@ async function createUWApi(
             return callWorkerFunctionWithReturn('uwModifiedEntities');
         },
 
+        uwConnectionState: () => {
+            return callWorkerFunctionWithReturn('uwConnectionState');
+        },
+
+        uwMapState: () => {
+            return callWorkerFunctionWithReturn('uwMapState');
+        },
+
+        // COMMANDS AND ORDERS
+        uwOrders: (unit: number) => callWorkerFunctionWithReturn('uwOrders', unit),
+        uwOrder: async (unit: number, order: IUwOrder) => callWorkerFunction('uwOrder', unit, order),
+        uwCommandSelfDestruct: async (unit: number) => callWorkerFunction('uwCommandSelfDestruct', unit),
+        uwCommandPlaceConstruction: async (proto: number, position: number, yaw: number) => callWorkerFunction('uwCommandPlaceConstruction', proto, position, yaw),
+        uwCommandSetRecipe: async (...args) => callWorkerFunction('uwCommandSetRecipe', ...args),
+        uwCommandLoad: async (...args) => callWorkerFunction('uwCommandLoad', ...args),
+        uwCommandUnload: async (...args) => callWorkerFunction('uwCommandUnload', ...args),
+        uwCommandMove: async (...args) => callWorkerFunction('uwCommandMove', ...args),
+        uwCommandAim: async (...args) => callWorkerFunction('uwCommandAim', ...args),
+        uwCommandRenounceControl: async (...args) => callWorkerFunction('uwCommandRenounceControl', ...args),
+        uwCommandSetPriority: async (...args) => callWorkerFunction('uwCommandSetPriority', ...args),
+
+        // PROTOTYPES
+        uwAllPrototypes: async () => callWorkerFunctionWithReturn('uwAllPrototypes'),
+        uwDefinitionsJson: async () => callWorkerFunctionWithReturn('uwDefinitionsJson'),
+
         cleanup: async () => {
             callWorkerFunction('cleanup');
             callbacksMap.clear();
@@ -174,7 +202,7 @@ async function createUWApi(
                 }, 1000);
             });
         },
-    } as IUWApi;
+    } satisfies IUWApi;
 }
 
 export default createUWApi;

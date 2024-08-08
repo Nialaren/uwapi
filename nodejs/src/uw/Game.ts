@@ -1,10 +1,16 @@
+import Commands from './Commands';
 import { ConnectionState, GameState, MapState, Severity } from './helpers';
+import Prototypes from './Prototypes';
 import { createSimpleLogger } from './simpleLogger';
 import type {
     IUwShootingArray,
     UnregisterUwCallback,
     UpdateCallbackType,
+    UwConnectionCallbackType,
+    UwGameStateCallbackType,
     UwLogCallbackType,
+    UwMapStateCallbackType,
+    UwShootingCallbackType,
 } from './types';
 import createUWApi, { UwApi } from './uwApi';
 
@@ -28,12 +34,23 @@ class Game {
     #cleanExceptionCallback: UnregisterUwCallback;
 
     #cleanCallbacks: UnregisterUwCallback[];
-    #updateCallback: UpdateCallbackType | undefined;
+
+    _connectionStateChangedHandler: UwConnectionCallbackType[];
+    _updatingHandler: UpdateCallbackType[];
+    _gameStateChangedHandler: UwGameStateCallbackType[];
+    _mapStateChangedHandler: UwMapStateCallbackType[];
+    _shootingHandler: UwShootingCallbackType[];
 
     _steamPath: string;
     _isHardened: boolean;
     _isInitialized: boolean;
     _logger: ILogger;
+
+    // other
+    prototypes: Prototypes;
+    map: any;
+    world: any;
+    commands: Commands;
 
     // state
     _tick: number;
@@ -43,7 +60,14 @@ class Game {
         this._steamPath = steamPath;
         this._isHardened = options?.isHardened || false;
         this._logger = options?.logger || createSimpleLogger();
+
         this.#cleanCallbacks = [];
+
+        this._connectionStateChangedHandler = [];
+        this._updatingHandler = [];
+        this._gameStateChangedHandler = [];
+        this._mapStateChangedHandler = [];
+        this._shootingHandler = [];
     }
 
     async initialize(): Promise<boolean> {
@@ -65,6 +89,13 @@ class Game {
             this.#api.uwSetMapStateCallback(this._handleMapStateCallback),
             this.#api.uwSetShootingCallback(this._handleShootingCallback),
         );
+
+        // OTHER APIS
+        this.prototypes = new Prototypes(this.#api, this);
+        // this.map = Map(self._api, self._ffi, self)
+        // this.world = World(self._api, self._ffi, self)
+        this.commands = new Commands(this.#api);
+
         this._isInitialized = true;
         this._logger.log(Severity.Note, 'Init done');
         return true;
@@ -115,24 +146,38 @@ class Game {
     }
 
 
-    // TODO:
-
-    connectionStateEnum(): ConnectionState {
-        return ConnectionState.NONE;
+    connectionStateEnum(): Promise<ConnectionState> {
+        return this.#api.uwConnectionState();
     }
 
-    mapStateEnum(): MapState {
-        return MapState.NONE;
+    mapStateEnum(): Promise<MapState> {
+        return this.#api.uwMapState();
     }
 
     tick(): number {
         return this._tick;
     }
 
-    setUpdateCallback(callback: UpdateCallbackType): void {
-        this.#updateCallback = callback;
+    // CALLBACKS
+    addConnectionStateCallback(callback: UwConnectionCallbackType) {
+        this._connectionStateChangedHandler.push(callback);
     }
 
+    addUpdateCallback(callback: UpdateCallbackType) {
+        this._updatingHandler.push(callback);
+    }
+
+    addGameStateCallback(callback: UwGameStateCallbackType) {
+        this._gameStateChangedHandler.push(callback);
+    }
+
+    addMapStateCallback(callback: UwMapStateCallbackType) {
+        this._mapStateChangedHandler.push(callback);
+    }
+
+    addShootingCallback(callback: UwShootingCallbackType) {
+        this._shootingHandler.push(callback);
+    }
 
     /**
      * PRIVATE HANDLERS
@@ -154,10 +199,11 @@ class Game {
 
     _handleUpdateCallback = (tick: number, stepping: boolean) => {
         this._tick = tick;
-
-        if (typeof this.#updateCallback === 'function') {
-            this.#updateCallback(stepping);
-        }
+        this._updatingHandler.forEach((fn) => {
+            if (typeof fn === 'function') {
+                fn(stepping);
+            }
+        });
     };
 
     _handleConnectionStateCallback = (connectionState: ConnectionState) => {
@@ -165,6 +211,11 @@ class Game {
             Severity.Info,
            `Connection state: ${ConnectionState[connectionState]}`,
         );
+        this._connectionStateChangedHandler.forEach((fn) => {
+            if (typeof fn === 'function') {
+                fn(connectionState);
+            }
+        });
     }
 
     _handleGameStateCallback = (gameState: GameState) => {
@@ -172,6 +223,11 @@ class Game {
             Severity.Info,
            `Game state: ${GameState[gameState]}`,
         );
+        this._gameStateChangedHandler.forEach((fn) => {
+            if (typeof fn === 'function') {
+                fn(gameState);
+            }
+        });
     }
 
     _handleMapStateCallback = (mapState: MapState) => {
@@ -179,6 +235,11 @@ class Game {
             Severity.Info,
            `Map state: ${MapState[mapState]}`,
         );
+        this._mapStateChangedHandler.forEach((fn) => {
+            if (typeof fn === 'function') {
+                fn(mapState);
+            }
+        });
     }
 
     _handleShootingCallback = (shootData: IUwShootingArray) => {
@@ -187,6 +248,11 @@ class Game {
            'Shooting data',
            shootData
         );
+        this._shootingHandler.forEach((fn) => {
+            if (typeof fn === 'function') {
+                fn(shootData);
+            }
+        });
     }
 
     async cleanup() {
