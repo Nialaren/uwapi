@@ -75,6 +75,50 @@ export enum OverviewFlags {
     Unit = (1 << 2) | (1 << 3),
 }
 
+export enum UnitStateFlags {
+   None = 0,
+   Shooting = 1 << 0,
+   /**
+    * processing recipe
+    */
+   Processing = 1 << 1,
+   /**
+    * changing recipe
+    */
+   Rebuilding = 1 << 2,
+}
+
+export enum PlayerStateFlags {
+    None = 0,
+    Loaded = 1 << 0,
+    Pause = 1 << 1,
+    Disconnected = 1 << 2,
+    Admin = 1 << 3,
+}
+
+export enum PlayerConnectionClass {
+    None = 0,
+    Computer = 1,
+    VirtualReality = 2,
+    Robot = 3,
+    UwApi = 4,
+}
+
+export enum ForceStateFlags {
+   None = 0,
+   Winner = 1 << 0,
+   Defeated = 1 << 1,
+   Disconnected = 1 << 2,
+}
+
+export enum ForeignPolicyEnum {
+    None = 0,
+    Self = 1,
+    Ally = 2,
+    Neutral = 3,
+    Enemy = 4,
+};
+
 export interface ILogger {
     log: (severity: Severity, message: string, extra?: any) => void;
     error: (message: string, extra?: any) => void;

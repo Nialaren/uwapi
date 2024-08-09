@@ -2,7 +2,7 @@ import { ConnectionState, GameState, MapState, Severity } from './helpers';
 import Commands from './Commands';
 import Map from './Map';
 import Prototypes from './Prototypes';
-import { createSimpleLogger } from './simpleLogger';
+import { createSimpleLogger } from './helpers/simpleLogger';
 import type {
     IUwShootingArray,
     UnregisterUwCallback,
