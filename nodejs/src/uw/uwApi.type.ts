@@ -1,4 +1,4 @@
-import { ConnectionState, MapState, Priority, Severity } from './helpers';
+import { ConnectionState, MapState, OverviewFlags, Priority, Severity } from './helpers';
 import type {
     UwLogCallbackType,
     UnregisterUwCallback,
@@ -11,6 +11,8 @@ import type {
     IUwMyPlayer,
     IUwOrder,
     IUwProtoGeneric,
+    IUwMapInfo,
+    IUwTile,
 } from './types';
 
 export interface IUWApi {
@@ -67,8 +69,35 @@ export interface IUWApi {
     uwAllPrototypes: () => Promise<IUwProtoGeneric[]>;
     uwDefinitionsJson: () => Promise<string>;
 
+    // MAP SHIT
+    uwOverviewIds: (position: number) => Promise<number[]>;
+    uwAreaRange: (x: number, y: number, z: number, radius: number) => Promise<number[]>;
+    uwAreaConnected: (position: number, radius: number) => Promise<number[]>;
+    uwAreaNeighborhood: (position: number, radius: number) => Promise<number[]>;
+    uwAreaExtended: (position: number, radius: number) => Promise<number[]>;
+    uwTestVisible: (x: number, y: number, z: number, x2: number, y2: number, z2: number) => Promise<boolean>;
+
+    // tests
+    uwTestShooting: (
+        shooterPosition: number,
+        shooterProto: number,
+        targetPosition: number,
+        targetProto: number,
+    ) => Promise<boolean>;
+
+    uwDistanceEstimate: (a: number, b: number) => Promise<number>;
+    uwYaw: (position: number, towards: number) => Promise<number>;
+    uwTestConstructionPlacement: (constructionPrototype: number, position: number) => Promise<boolean>;
+    uwFindConstructionPlacement: (constructionPrototype: number, position: number) => Promise<number>;
+    // Map INFO
+    uwMapInfo: () => Promise<IUwMapInfo>;
+    uwTilesCount: () => Promise<number>;
+    uwTile: (index: number) => Promise<IUwTile>;
+
+    // Map updating
+    uwOverviewExtract: () => Promise<OverviewFlags[]>;
+
     cleanup: () => Promise<void>;
 
-    _proto?: any,
-    _struct?: any,
+    _proto?: number,
 }

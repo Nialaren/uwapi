@@ -16,11 +16,13 @@ import {
 
 } from 'ffi-rs';
 import type {
+    IUwMapInfo,
     IUwMyPlayer,
     IUwOrder,
     IUwProtoGeneric,
     IUwShootingArray,
     IUwShootingData,
+    IUwTile,
     UnregisterUwCallback,
 
     UwConnectionCallbackType,
@@ -29,7 +31,7 @@ import type {
     UwUpdateCallbackType,
 } from '../types';
 import { IUWApi } from '../uwApi.type';
-import { ConnectionState, getLibName, MapState, Priority, Prototype } from '../helpers';
+import { ConnectionState, getLibName, MapState, OverviewFlags, Priority, Prototype } from '../helpers';
 import { define } from './ffiRsHelpers';
 
 const LIBRARY_NAME = 'UNNATURAL_API';
@@ -109,6 +111,40 @@ export function createUWApi(steamPath: string, isHardened = false): IUWApi {
          */
         orders: DataType.External,
         count: DataType.I32,
+    };
+
+    // OverviewExtract
+    const UwOverviewExtractStruct = {
+        flags: DataType.External,
+        count: DataType.I32,
+    };
+
+    // Map Info
+    const UwMapInfoStruct = {
+        name: DataType.String,
+        guid: DataType.String,
+        path: DataType.String,
+        maxPlayers: DataType.I32,
+    };
+
+    const UwTileStruct = {
+        position: arrayConstructor({
+            dynamicArray: false,
+            length: 3,
+            type: DataType.I32Array,
+        }),
+        up: arrayConstructor({
+            dynamicArray: false,
+            length: 3,
+            type: DataType.I32Array,
+        }),
+        /**
+         * Uint32
+         */
+        neighborsIndices: DataType.External,
+        neighborsCount: DataType.I32,
+        terrain: DataType.U8,
+        border: DataType.Boolean,
     };
 
     // define prototypes
@@ -316,6 +352,130 @@ export function createUWApi(steamPath: string, isHardened = false): IUWApi {
         uwDefinitionsJson: {
             retType: DataType.String,
             paramsType: [],
+        },
+        // MAP STUFF
+        uwOverviewIds: {
+            retType: DataType.Void,
+            paramsType: [DataType.I32, DataType.External],
+        },
+        uwAreaRange: {
+            retType: DataType.Void,
+            paramsType: [
+                DataType.Float,
+                DataType.Float,
+                DataType.Float,
+                DataType.Float, // radius
+                DataType.External,
+            ],
+        },
+        uwAreaConnected: {
+            retType: DataType.Void,
+            paramsType: [
+                DataType.I32,
+                DataType.Float,
+                DataType.External,
+            ],
+        },
+        uwAreaNeighborhood: {
+            retType: DataType.Void,
+            paramsType: [
+                DataType.I32,
+                DataType.Float,
+                DataType.External,
+            ],
+        },
+        uwAreaExtended: {
+            retType: DataType.Void,
+            paramsType: [
+                DataType.I32,
+                DataType.Float,
+                DataType.External,
+            ],
+        },
+        uwTestVisible: {
+            retType: DataType.Boolean,
+            paramsType: [
+                DataType.Float,
+                DataType.Float,
+                DataType.Float,
+                // second Vec
+                DataType.Float,
+                DataType.Float,
+                DataType.Float,
+            ],
+        },
+        uwTestShooting: {
+            retType: DataType.Boolean,
+            paramsType: [
+                DataType.I32,
+                DataType.I32,
+                DataType.I32,
+                DataType.I32,
+            ],
+        },
+        uwDistanceLine: {
+            retType: DataType.Float,
+            paramsType: [
+                DataType.Float,
+                DataType.Float,
+                DataType.Float,
+                // vec2
+                DataType.Float,
+                DataType.Float,
+                DataType.Float,
+            ],
+        },
+        uwDistanceEstimate: {
+            retType: DataType.Float,
+            paramsType: [
+                DataType.I32,
+                DataType.I32,
+            ],
+        },
+        uwYaw: {
+            retType: DataType.Float,
+            paramsType: [
+                DataType.I32,
+                DataType.I32,
+            ],
+        },
+        uwTestConstructionPlacement: {
+            retType: DataType.Boolean,
+            paramsType: [
+                DataType.I32,
+                DataType.I32,
+            ],
+        },
+        uwFindConstructionPlacement: {
+            retType: DataType.I32,
+            paramsType: [
+                DataType.I32,
+                DataType.I32,
+            ],
+        },
+        uwMapInfo: {
+            retType: DataType.Boolean,
+            paramsType: [DataType.External],
+            freeResultMemory: true,
+            runInNewThread: false,
+        },
+        uwTilesCount: {
+            retType: DataType.I32,
+            paramsType: [],
+            freeResultMemory: true,
+            runInNewThread: false,
+        },
+        uwTile: {
+            retType: DataType.Void,
+            paramsType: [DataType.I32, DataType.External],
+            freeResultMemory: true,
+            runInNewThread: false,
+        },
+        uwOverviewExtract: {
+            retType: DataType.Void,
+            paramsType: [DataType.External],
+            freeResultMemory: true,
+            runInNewThread: false,
         },
     }, {
         library: LIBRARY_NAME,
@@ -667,6 +827,382 @@ export function createUWApi(steamPath: string, isHardened = false): IUWApi {
 
         uwDefinitionsJson: async () => {
             return uwLib.uwDefinitionsJson([]) as string;
+        },
+
+        uwOverviewIds: async (position: number) => {
+            const IdsPointer = createPointer({
+                paramsType: [DataType.I32Array],
+                paramsValue: [[]],
+            });
+
+            const UwIdsStructData = {
+                ids: unwrapPointer(IdsPointer)[0],
+                count: 0,
+            };
+
+            const IdsStructPointer = createPointer({
+                paramsType: [UwIdsStruct],
+                paramsValue: [UwIdsStructData],
+            });
+
+            await uwLib.uwOverviewIds([position, unwrapPointer(IdsStructPointer)[0]]);
+
+            const obj = restorePointer({
+                retType: [UwIdsStruct],
+                paramsValue: IdsStructPointer,
+            })[0] as unknown as { ids: JsExternal, count: number };
+
+            const resultIdsPointer = wrapPointer([obj.ids]);
+
+            const IdsTypeArr = arrayConstructor({
+                length: obj.count,
+                type: DataType.I32Array
+            });
+
+            const ids = restorePointer({
+                retType: [IdsTypeArr],
+                paramsValue: resultIdsPointer,
+            })[0] as unknown as number[];
+
+            freePointer({
+                paramsType: [UwIdsStruct],
+                paramsValue: IdsStructPointer,
+                pointerType: PointerType.RsPointer,
+            });
+
+            return ids;
+        },
+
+        uwAreaRange: async (x: number, y: number, z: number, radius: number) => {
+            const IdsPointer = createPointer({
+                paramsType: [DataType.I32Array],
+                paramsValue: [[]],
+            });
+
+            const UwIdsStructData = {
+                ids: unwrapPointer(IdsPointer)[0],
+                count: 0,
+            };
+
+            const IdsStructPointer = createPointer({
+                paramsType: [UwIdsStruct],
+                paramsValue: [UwIdsStructData],
+            });
+
+            await uwLib.uwAreaRange([x, y, z, radius, unwrapPointer(IdsStructPointer)[0]]);
+
+            const obj = restorePointer({
+                retType: [UwIdsStruct],
+                paramsValue: IdsStructPointer,
+            })[0] as unknown as { ids: JsExternal, count: number };
+
+            const resultIdsPointer = wrapPointer([obj.ids]);
+
+            const IdsTypeArr = arrayConstructor({
+                length: obj.count,
+                type: DataType.I32Array
+            });
+
+            const ids = restorePointer({
+                retType: [IdsTypeArr],
+                paramsValue: resultIdsPointer,
+            })[0] as unknown as number[];
+
+            freePointer({
+                paramsType: [UwIdsStruct],
+                paramsValue: IdsStructPointer,
+                pointerType: PointerType.RsPointer,
+            });
+
+            return ids;
+        },
+
+        uwAreaConnected: async (position: number, radius: number) => {
+            const IdsPointer = createPointer({
+                paramsType: [DataType.I32Array],
+                paramsValue: [[]],
+            });
+
+            const UwIdsStructData = {
+                ids: unwrapPointer(IdsPointer)[0],
+                count: 0,
+            };
+
+            const IdsStructPointer = createPointer({
+                paramsType: [UwIdsStruct],
+                paramsValue: [UwIdsStructData],
+            });
+
+            await uwLib.uwAreaConnected([position, radius, unwrapPointer(IdsStructPointer)[0]]);
+
+            const obj = restorePointer({
+                retType: [UwIdsStruct],
+                paramsValue: IdsStructPointer,
+            })[0] as unknown as { ids: JsExternal, count: number };
+
+            const resultIdsPointer = wrapPointer([obj.ids]);
+
+            const IdsTypeArr = arrayConstructor({
+                length: obj.count,
+                type: DataType.I32Array
+            });
+
+            const ids = restorePointer({
+                retType: [IdsTypeArr],
+                paramsValue: resultIdsPointer,
+            })[0] as unknown as number[];
+
+            freePointer({
+                paramsType: [UwIdsStruct],
+                paramsValue: IdsStructPointer,
+                pointerType: PointerType.RsPointer,
+            });
+
+            return ids;
+        },
+
+        uwAreaNeighborhood: async (position: number, radius: number) => {
+            const IdsPointer = createPointer({
+                paramsType: [DataType.I32Array],
+                paramsValue: [[]],
+            });
+
+            const UwIdsStructData = {
+                ids: unwrapPointer(IdsPointer)[0],
+                count: 0,
+            };
+
+            const IdsStructPointer = createPointer({
+                paramsType: [UwIdsStruct],
+                paramsValue: [UwIdsStructData],
+            });
+
+            await uwLib.uwAreaNeighborhood([position, radius, unwrapPointer(IdsStructPointer)[0]]);
+
+            const obj = restorePointer({
+                retType: [UwIdsStruct],
+                paramsValue: IdsStructPointer,
+            })[0] as unknown as { ids: JsExternal, count: number };
+
+            const resultIdsPointer = wrapPointer([obj.ids]);
+
+            const IdsTypeArr = arrayConstructor({
+                length: obj.count,
+                type: DataType.I32Array
+            });
+
+            const ids = restorePointer({
+                retType: [IdsTypeArr],
+                paramsValue: resultIdsPointer,
+            })[0] as unknown as number[];
+
+            freePointer({
+                paramsType: [UwIdsStruct],
+                paramsValue: IdsStructPointer,
+                pointerType: PointerType.RsPointer,
+            });
+
+            return ids;
+        },
+
+        uwAreaExtended: async (position: number, radius: number) => {
+            const IdsPointer = createPointer({
+                paramsType: [DataType.I32Array],
+                paramsValue: [[]],
+            });
+
+            const UwIdsStructData = {
+                ids: unwrapPointer(IdsPointer)[0],
+                count: 0,
+            };
+
+            const IdsStructPointer = createPointer({
+                paramsType: [UwIdsStruct],
+                paramsValue: [UwIdsStructData],
+            });
+
+            await uwLib.uwAreaExtended([position, radius, unwrapPointer(IdsStructPointer)[0]]);
+
+            const obj = restorePointer({
+                retType: [UwIdsStruct],
+                paramsValue: IdsStructPointer,
+            })[0] as unknown as { ids: JsExternal, count: number };
+
+            const resultIdsPointer = wrapPointer([obj.ids]);
+
+            const IdsTypeArr = arrayConstructor({
+                length: obj.count,
+                type: DataType.I32Array
+            });
+
+            const ids = restorePointer({
+                retType: [IdsTypeArr],
+                paramsValue: resultIdsPointer,
+            })[0] as unknown as number[];
+
+            freePointer({
+                paramsType: [UwIdsStruct],
+                paramsValue: IdsStructPointer,
+                pointerType: PointerType.RsPointer,
+            });
+
+            return ids;
+        },
+
+        uwTestVisible: async (x: number, y: number, z: number, x2: number, y2: number, z2: number) => {
+            return uwLib.uwTestVisible(x, y, z, x2, y2, z2) as boolean;
+        },
+
+        uwTestShooting: async (
+            shooterPosition: number,
+            shooterProto: number,
+            targetPosition: number,
+            targetProto: number,
+        ) => {
+            return uwLib.uwTestShooting(
+                shooterPosition,
+                shooterProto,
+                targetPosition,
+                targetProto,
+            ) as boolean;
+        },
+
+        uwDistanceEstimate: async (a: number, b: number) => {
+            return uwLib.uwDistanceEstimate(a, b) as number;
+        },
+
+        uwYaw: async (position: number, towards: number) => {
+            return uwLib.uwYaw(position, towards) as number;
+        },
+
+        uwTestConstructionPlacement: async (constructionPrototype: number, position: number) => {
+            return uwLib.uwTestConstructionPlacement(constructionPrototype, position) as boolean;
+        },
+
+        uwFindConstructionPlacement: async (constructionPrototype: number, position: number) => {
+            return uwLib.uwFindConstructionPlacement(constructionPrototype, position) as number;
+        },
+
+        uwMapInfo: async () => {
+            const mapInfoStructData: IUwMapInfo = {
+                name: '',
+                guid: '',
+                path: '',
+                maxPlayers: 0,
+            };
+            const mapInfoPointer = createPointer({
+                paramsType: [UwMapInfoStruct],
+                paramsValue: [mapInfoStructData],
+            });
+            await uwLib.uwMapInfo(unwrapPointer(mapInfoPointer));
+
+            const mapInfo = restorePointer({
+                retType: [UwMapInfoStruct],
+                paramsValue: mapInfoPointer,
+            })[0] as unknown as IUwMapInfo;
+
+            freePointer({
+                paramsType: [DataType.External],
+                paramsValue: mapInfoPointer,
+                pointerType: PointerType.RsPointer,
+            });
+
+            return mapInfo;
+        },
+
+        uwTilesCount: async () => {
+            return uwLib.uwTilesCount([]) as number;
+        },
+
+        uwTile: async (index: number) => {
+            const indiciesPointer = createPointer({
+                paramsType: [DataType.I32Array],
+                paramsValue: [[]],
+            });
+
+            const tileData = {
+                position: [0, 0, 0],
+                up: [0, 0, 0],
+                neighborsIndices: wrapPointer(indiciesPointer)[0],
+                neighborsCount: 0,
+                terrain: 0,
+                border: false,
+            };
+            const tileStructPointer = createPointer({
+                paramsType: [UwTileStruct],
+                paramsValue: [tileData],
+            });
+            await uwLib.uwTile([index, unwrapPointer(tileStructPointer)[0]]);
+
+            const tile = restorePointer({
+                retType: [UwTileStruct],
+                paramsValue: tileStructPointer,
+            })[0] as unknown as Omit<IUwTile, 'neighborsIndices'> & { neighborsIndices: JsExternal };
+
+            const ArrayType = arrayConstructor({
+                type: DataType.I32Array,
+                length: tile.neighborsCount,
+            });
+
+            const neighborsIndices = restorePointer({
+                retType: [ArrayType],
+                paramsValue: wrapPointer([tile.neighborsIndices])
+            })[0] as unknown as number[];
+
+            freePointer({
+                paramsType: [UwTileStruct],
+                paramsValue: tileStructPointer,
+                pointerType: PointerType.RsPointer,
+            });
+
+            return {
+                ...tile,
+                neighborsIndices,
+            } satisfies IUwTile;
+        },
+
+        uwOverviewExtract: async () => {
+            const FlagsPointer = createPointer({
+                paramsType: [DataType.I32Array],
+                paramsValue: [[]],
+            });
+
+            const UwOverviewExtractStructData = {
+                flags: unwrapPointer(FlagsPointer)[0],
+                count: 0,
+            };
+
+            const UwOverviewExtractDataPointer = createPointer({
+                paramsType: [UwOverviewExtractStruct],
+                paramsValue: [UwOverviewExtractStructData],
+            });
+
+            await uwLib.uwOverviewExtract(unwrapPointer(UwOverviewExtractDataPointer));
+
+            const obj = restorePointer({
+                retType: [UwOverviewExtractStruct],
+                paramsValue: UwOverviewExtractDataPointer,
+            })[0] as unknown as { flags: JsExternal, count: number };
+
+            const resultFlagsPointer = wrapPointer([obj.flags]);
+
+            const ArrayType = arrayConstructor({
+                length: obj.count,
+                type: DataType.I32Array
+            });
+
+            const flags = restorePointer({
+                retType: [ArrayType],
+                paramsValue: resultFlagsPointer,
+            })[0] as unknown as OverviewFlags[];
+
+            freePointer({
+                paramsType: [UwOverviewExtractStruct],
+                paramsValue: UwOverviewExtractDataPointer,
+                pointerType: PointerType.RsPointer,
+            });
+
+            return flags;
         },
 
         // NON UW API

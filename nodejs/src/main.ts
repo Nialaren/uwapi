@@ -8,7 +8,7 @@ const STEAM_PATH = '/home/fisa/.local/share/Steam/steamapps/common/Unnatural Wor
 function tickCallbackClosure(game: uw.Game) {
     const tickCallback: UpdateCallbackType = async (stepping) => {
 
-        if (game.tick() % 100 == 0) {
+        if (game.tick() % 100 == 0 && game.tick() !== 0) {
             console.log(`${game.tick()} Alive ${stepping}`);
         }
 

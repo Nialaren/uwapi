@@ -1,5 +1,6 @@
-import Commands from './Commands';
 import { ConnectionState, GameState, MapState, Severity } from './helpers';
+import Commands from './Commands';
+import Map from './Map';
 import Prototypes from './Prototypes';
 import { createSimpleLogger } from './simpleLogger';
 import type {
@@ -48,7 +49,7 @@ class Game {
 
     // other
     prototypes: Prototypes;
-    map: any;
+    map: Map;
     world: any;
     commands: Commands;
 
@@ -75,7 +76,7 @@ class Game {
         if (this._isInitialized) {
             return true;
         }
-        this.#api = await createUWApi(this._steamPath, this._isHardened, 'fork');
+        this.#api = await createUWApi(this._steamPath, this._isHardened);
         this.#api.uwInitialize(this.#api.UW_VERSION);
 
         this.#cleanLogCallback = this.#api.uwSetLogCallback(this._handleLogCallback);
@@ -92,7 +93,7 @@ class Game {
 
         // OTHER APIS
         this.prototypes = new Prototypes(this.#api, this);
-        // this.map = Map(self._api, self._ffi, self)
+        this.map = new Map(this.#api, this);
         // this.world = World(self._api, self._ffi, self)
         this.commands = new Commands(this.#api);
 

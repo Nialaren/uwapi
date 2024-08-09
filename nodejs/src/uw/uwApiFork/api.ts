@@ -4,7 +4,7 @@ import { IUWApi } from '../uwApi.type';
 import {
     UW_VERSION,
 } from '../uwApiFFIRs/uwApiFFIRS';
-import { UwWorkerMessage } from '../workerMessage.type';
+import { UwWorkerMessage } from './workerMessage.type';
 import { IUwOrder, UnregisterUwCallback } from '../types';
 import { Severity } from '../helpers';
 import { IInitMessage } from './message.type';
@@ -20,7 +20,7 @@ async function createUWApi(
     const callbacksMap = new Map<string, Function>();
 
     const childProcess = fork(path.resolve(__dirname, 'uwChildProcess.js'), {
-        // stdio: 'ignore',
+        stdio: 'ignore',
     });
 
     childProcess.on('error', (error) => {
@@ -191,6 +191,31 @@ async function createUWApi(
         // PROTOTYPES
         uwAllPrototypes: async () => callWorkerFunctionWithReturn('uwAllPrototypes'),
         uwDefinitionsJson: async () => callWorkerFunctionWithReturn('uwDefinitionsJson'),
+
+        // MAP SHIT
+        uwOverviewIds: (position: number) => callWorkerFunctionWithReturn('uwOverviewIds', position),
+        uwAreaRange: (...args) => callWorkerFunctionWithReturn('uwAreaRange', ...args),
+        uwAreaConnected: (...args) => callWorkerFunctionWithReturn('uwAreaConnected', ...args),
+        uwAreaNeighborhood: (...args) => callWorkerFunctionWithReturn('uwAreaNeighborhood', ...args),
+        uwAreaExtended: (...args) => callWorkerFunctionWithReturn('uwAreaExtended', ...args),
+        uwTestVisible: (...args) => callWorkerFunctionWithReturn('uwTestVisible', ...args),
+
+        // tests
+        uwTestShooting: (
+            ...args
+        ) => callWorkerFunctionWithReturn('uwTestShooting', ...args),
+
+        uwDistanceEstimate: (...args) => callWorkerFunctionWithReturn('uwDistanceEstimate', ...args),
+        uwYaw: (...args) => callWorkerFunctionWithReturn('uwYaw', ...args),
+        uwTestConstructionPlacement: (...args) => callWorkerFunctionWithReturn('uwTestConstructionPlacement', ...args),
+        uwFindConstructionPlacement: (...args) => callWorkerFunctionWithReturn('uwFindConstructionPlacement', ...args),
+        // Map INFO
+        uwMapInfo: () => callWorkerFunctionWithReturn('uwMapInfo'),
+        uwTilesCount: () => callWorkerFunctionWithReturn('uwTilesCount'),
+        uwTile: (index: number) => callWorkerFunctionWithReturn('uwTile', index),
+
+        // Map updating
+        uwOverviewExtract: () => callWorkerFunctionWithReturn('uwOverviewExtract'),
 
         cleanup: async () => {
             callWorkerFunction('cleanup');
