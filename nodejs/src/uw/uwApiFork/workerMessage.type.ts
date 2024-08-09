@@ -1,10 +1,10 @@
-import { ConnectionState, GameState, MapState } from './helpers';
+import { ConnectionState, GameState, MapState } from '../helpers';
 import type {
     IUWLogData,
     IUwMyPlayer,
     IUwShootingArray,
-} from './types';
-import { IUWApi } from './uwApi.type';
+} from '../types';
+import { IUWApi } from '../uwApi.type';
 
 export interface IMessageBase {
     action: string;
@@ -16,9 +16,17 @@ export interface IMessageTemplate<A extends string, D> extends IMessageBase {
     data: D;
 }
 
-export interface IMessageFromApi<K extends keyof IUWApi> extends IMessageBase {
+export interface IMessageFromApi<
+    K extends keyof IUWApi,
+    FN = IUWApi[K],
+    RE = FN extends (...args: unknown[]) => unknown
+        ? ReturnType<FN> : never,
+    REVAL = RE extends Promise<infer T>
+        ? T
+        : RE
+> extends IMessageBase {
     action: K;
-    data: IUWApi[K] extends Function ? [ReturnType<IUWApi[K]>] : never;
+    data: [REVAL];
 }
 
 export interface ITestMessage extends IMessageBase {
@@ -110,6 +118,22 @@ export type UwWorkerMessage =
     // prototypes
     | IMessageFromApi<'uwAllPrototypes'>
     | IMessageFromApi<'uwDefinitionsJson'>
+    // map
+    | IMessageFromApi<'uwOverviewIds'>
+    | IMessageFromApi<'uwAreaRange'>
+    | IMessageFromApi<'uwAreaConnected'>
+    | IMessageFromApi<'uwAreaNeighborhood'>
+    | IMessageFromApi<'uwAreaExtended'>
+    | IMessageFromApi<'uwTestVisible'>
+    | IMessageFromApi<'uwTestShooting'>
+    | IMessageFromApi<'uwDistanceEstimate'>
+    | IMessageFromApi<'uwYaw'>
+    | IMessageFromApi<'uwTestConstructionPlacement'>
+    | IMessageFromApi<'uwFindConstructionPlacement'>
+    | IMessageFromApi<'uwMapInfo'>
+    | IMessageFromApi<'uwTilesCount'>
+    | IMessageFromApi<'uwTile'>
+    | IMessageFromApi<'uwOverviewExtract'>
 
     // Connection
     | IUwTryReconnectMessage

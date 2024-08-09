@@ -8,6 +8,22 @@ import type {
     Severity,
 } from './helpers';
 
+export interface IUwMapInfo {
+    name: string;
+    guid: string;
+    path: string;
+    maxPlayers: number;
+}
+
+export interface IUwTile {
+    position: [number, number, number];
+    up: [number, number, number];
+    neighborsIndices: number[];
+    neighborsCount: number;
+    terrain: Uint8Array;
+    border: boolean;
+}
+
 export interface IUwProtoGeneric {
     type: Prototype;
     name: string;

@@ -1,7 +1,7 @@
 import {
     createUWApi,
 } from '../uwApiFFIRs/uwApiFFIRS';
-import type { UwParentMessage, UwWorkerMessage } from '../workerMessage.type';
+import type { UwParentMessage, UwWorkerMessage } from './workerMessage.type';
 import type { IInitMessage } from './message.type';
 
 
@@ -291,6 +291,188 @@ function initCallback(initMessage: IInitMessage) {
                         asyncFn();
                         break;
                     }
+
+                    case 'uwOverviewIds': {
+                        const asyncFn = async () => {
+                            const result = await api[methodName].apply(api, parameters);
+
+                            sendToParent({
+                                action: methodName,
+                                data: [result],
+                            });
+                        };
+                        asyncFn();
+                        break;
+                    }
+                    case 'uwAreaRange': {
+                        const asyncFn = async () => {
+                            const result = await api[methodName].apply(api, parameters);
+
+                            sendToParent({
+                                action: methodName,
+                                data: [result],
+                            });
+                        };
+                        asyncFn();
+                        break;
+                    }
+                    case 'uwAreaConnected': {
+                        const asyncFn = async () => {
+                            const result = await api[methodName].apply(api, parameters);
+
+                            sendToParent({
+                                action: methodName,
+                                data: [result],
+                            });
+                        };
+                        asyncFn();
+                        break;
+                    }
+                    case 'uwAreaNeighborhood': {
+                        const asyncFn = async () => {
+                            const result = await api[methodName].apply(api, parameters);
+
+                            sendToParent({
+                                action: methodName,
+                                data: [result],
+                            });
+                        };
+                        asyncFn();
+                        break;
+                    }
+                    case 'uwAreaExtended': {
+                        const asyncFn = async () => {
+                            const result = await api[methodName].apply(api, parameters);
+
+                            sendToParent({
+                                action: methodName,
+                                data: [result],
+                            });
+                        };
+                        asyncFn();
+                        break;
+                    }
+                    case 'uwTestVisible': {
+                        const asyncFn = async () => {
+                            const result = await api[methodName].apply(api, parameters);
+
+                            sendToParent({
+                                action: methodName,
+                                data: [result],
+                            });
+                        };
+                        asyncFn();
+                        break;
+                    }
+                    case 'uwTestShooting': {
+                        const asyncFn = async () => {
+                            const result = await api[methodName].apply(api, parameters);
+
+                            sendToParent({
+                                action: methodName,
+                                data: [result],
+                            });
+                        };
+                        asyncFn();
+                        break;
+                    }
+                    case 'uwDistanceEstimate': {
+                        const asyncFn = async () => {
+                            const result = await api[methodName].apply(api, parameters);
+
+                            sendToParent({
+                                action: methodName,
+                                data: [result],
+                            });
+                        };
+                        asyncFn();
+                        break;
+                    }
+                    case 'uwYaw': {
+                        const asyncFn = async () => {
+                            const result = await api[methodName].apply(api, parameters);
+
+                            sendToParent({
+                                action: methodName,
+                                data: [result],
+                            });
+                        };
+                        asyncFn();
+                        break;
+                    }
+                    case 'uwTestConstructionPlacement': {
+                        const asyncFn = async () => {
+                            const result = await api[methodName].apply(api, parameters);
+
+                            sendToParent({
+                                action: methodName,
+                                data: [result],
+                            });
+                        };
+                        asyncFn();
+                        break;
+                    }
+                    case 'uwFindConstructionPlacement': {
+                        const asyncFn = async () => {
+                            const result = await api[methodName].apply(api, parameters);
+
+                            sendToParent({
+                                action: methodName,
+                                data: [result],
+                            });
+                        };
+                        asyncFn();
+                        break;
+                    }
+                    case 'uwMapInfo': {
+                        const asyncFn = async () => {
+                            const result = await api[methodName].apply(api, parameters);
+
+                            sendToParent({
+                                action: methodName,
+                                data: [result],
+                            });
+                        };
+                        asyncFn();
+                        break;
+                    }
+                    case 'uwTilesCount': {
+                        const asyncFn = async () => {
+                            const result = await api[methodName].apply(api, parameters);
+
+                            sendToParent({
+                                action: methodName,
+                                data: [result],
+                            });
+                        };
+                        asyncFn();
+                        break;
+                    }
+                    case 'uwTile': {
+                        const asyncFn = async () => {
+                            const result = await api[methodName].apply(api, parameters);
+
+                            sendToParent({
+                                action: methodName,
+                                data: [result],
+                            });
+                        };
+                        asyncFn();
+                        break;
+                    }
+                    case 'uwOverviewExtract': {
+                        const asyncFn = async () => {
+                            const result = await api[methodName].apply(api, parameters);
+
+                            sendToParent({
+                                action: methodName,
+                                data: [result],
+                            });
+                        };
+                        asyncFn();
+                        break;
+                    }
+
                     case 'cleanup': {
                         callbacksMap.forEach((cleanUp) => {
                             cleanUp();
