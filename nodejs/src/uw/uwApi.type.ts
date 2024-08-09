@@ -97,6 +97,11 @@ export interface IUWApi {
     // Map updating
     uwOverviewExtract: () => Promise<OverviewFlags[]>;
 
+    // WORLD FUNS
+    uwAllEntities: () => Promise<number[]>;
+
+    // COMPONENT FUN
+
     cleanup: () => Promise<void>;
 
     _proto?: number,
