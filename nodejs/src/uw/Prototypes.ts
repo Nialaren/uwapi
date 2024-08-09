@@ -27,7 +27,7 @@ class Prototypes {
     constructor(api: IUWApi, game: Game) {
         this._api = api;
         this._game = game;
-        this._game.addMapStateCallback(this._handleMapStateChanged)
+        this._game.addMapStateCallback(this._handleMapStateChanged);
 
         this._hitChangesTable = {};
         this._terrainTypesTable = {};
