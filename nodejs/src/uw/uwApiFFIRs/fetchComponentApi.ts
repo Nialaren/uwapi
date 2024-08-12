@@ -1,5 +1,36 @@
-import { arrayConstructor, createPointer, DataType, FieldType, freePointer, JsExternal, load, PointerType, restorePointer, unwrapPointer } from 'ffi-rs';
-import type { IUwAimComponent, IUwAmountComponent, IUwAttachmentComponent, IUwControllerComponent, IUwDiplomacyProposalComponent, IUwForceComponent, IUwForceDetailsComponent, IUwForeignPolicyComponent, IUwLifeComponent, IUwMoveComponent, IUwOwnerComponent, IUwPlayerComponent, IUwPositionComponent, IUwPriorityComponent, IUwProtoComponent, IUwRecipeComponent, IUwRecipeStatisticsComponent, IUwUnitComponent, IUwUpdateTimestampComponent } from '../component.type';
+import {
+    arrayConstructor,
+    createPointer,
+    DataType,
+    FieldType,
+    freePointer,
+    JsExternal,
+    load,
+    PointerType,
+    restorePointer,
+    unwrapPointer,
+} from 'ffi-rs';
+import type {
+    IUwAimComponent,
+    IUwAmountComponent,
+    IUwAttachmentComponent,
+    IUwControllerComponent,
+    IUwDiplomacyProposalComponent,
+    IUwForceComponent,
+    IUwForceDetailsComponent,
+    IUwForeignPolicyComponent,
+    IUwLifeComponent,
+    IUwMoveComponent,
+    IUwOwnerComponent,
+    IUwPlayerComponent,
+    IUwPositionComponent,
+    IUwPriorityComponent,
+    IUwProtoComponent,
+    IUwRecipeComponent,
+    IUwRecipeStatisticsComponent,
+    IUwUnitComponent,
+    IUwUpdateTimestampComponent,
+} from '../component.type';
 
 interface ISharedProps {
     library: string;
@@ -14,18 +45,24 @@ function callFetch<R>(
     structData: R,
     pointer: JsExternal,
 ): R | null {
-    // TODO: try resolve struct data?;
     const structPointer = createPointer({
         paramsType: [structType],
         paramsValue: [structData],
     });
-    const hasComponent = load({
+    let hasComponent = load({
         ...options,
         funcName: fnName,
-        retType: DataType.Void,
+        retType: DataType.Boolean,
         paramsType: [DataType.External, DataType.External],
         paramsValue: [pointer, unwrapPointer(structPointer)[0]],
+        runInNewThread: false,
     });
+
+    if (options.errno) {
+        console.log(hasComponent);
+        // @ts-ignore
+        hasComponent = hasComponent.value as boolean;
+    }
 
     let data: R | null = null;
     if (hasComponent) {
@@ -46,7 +83,7 @@ function callFetch<R>(
 
 function createFetchComponentApi(options: ISharedProps) {
     function uwEntityPointer(id: number) {
-        return load({
+         return load({
             ...options,
             funcName: 'uwEntityPointer',
             runInNewThread: false,
@@ -54,6 +91,18 @@ function createFetchComponentApi(options: ISharedProps) {
             paramsType: [DataType.I32],
             paramsValue: [id],
         }) as JsExternal;
+    }
+
+    function uwEntityId(pointer: JsExternal) {
+        return load({
+            ...options,
+            funcName: 'uwEntityId',
+            runInNewThread: false,
+            retType: DataType.I32,
+            paramsType: [DataType.External],
+            paramsValue: [pointer],
+            freeResultMemory: false,
+        });
     }
 
     const UwProtoComponentStruct = {
@@ -68,12 +117,14 @@ function createFetchComponentApi(options: ISharedProps) {
             paramsType: [UwProtoComponentStruct],
             paramsValue: [structPointerData],
         });
+
+        const unwrapedPointer = unwrapPointer(structPointer)[0];
         const hasComponent = load({
             ...options,
             funcName: 'uwFetchProtoComponent',
-            retType: DataType.Void,
+            retType: DataType.Boolean,
             paramsType: [DataType.External, DataType.External],
-            paramsValue: [pointer, unwrapPointer(structPointer)[0]],
+            paramsValue: [pointer, unwrapedPointer],
         });
 
         let data: null | IUwProtoComponent = null;
@@ -108,9 +159,9 @@ function createFetchComponentApi(options: ISharedProps) {
         const hasComponent = load({
             ...options,
             funcName: 'uwFetchOwnerComponent',
-            retType: DataType.Void,
+            retType: DataType.Boolean,
             paramsType: [DataType.External, DataType.External],
-            paramsValue: [pointer, structPointer],
+            paramsValue: [pointer, unwrapPointer(structPointer)[0]],
         });
 
         let data: null | IUwOwnerComponent = null;
@@ -147,9 +198,9 @@ function createFetchComponentApi(options: ISharedProps) {
         const hasComponent = load({
             ...options,
             funcName: 'uwFetchControllerComponent',
-            retType: DataType.Void,
+            retType: DataType.Boolean,
             paramsType: [DataType.External, DataType.External],
-            paramsValue: [pointer, structPointer],
+            paramsValue: [pointer, unwrapPointer(structPointer)[0]],
         });
 
         let data: null | IUwControllerComponent = null;
@@ -171,7 +222,7 @@ function createFetchComponentApi(options: ISharedProps) {
 
     const UwPositionComponentStruct = {
         position: DataType.I32,
-        yaw: DataType.Float,
+        yaw: DataType.Double,
     };
 
     function uwFetchPositionComponent(pointer: JsExternal) {
@@ -187,9 +238,9 @@ function createFetchComponentApi(options: ISharedProps) {
         const hasComponent = load({
             ...options,
             funcName: 'uwFetchPositionComponent',
-            retType: DataType.Void,
+            retType: DataType.Boolean,
             paramsType: [DataType.External, DataType.External],
-            paramsValue: [pointer, structPointer],
+            paramsValue: [pointer, unwrapPointer(structPointer)[0]],
         });
 
         let data: null | IUwPositionComponent = null;
@@ -243,8 +294,8 @@ function createFetchComponentApi(options: ISharedProps) {
         posEnd: DataType.I32,
         tickStart: DataType.I32,
         tickEnd: DataType.I32,
-        yawStart: DataType.Float,
-        yawEnd: DataType.Float,
+        yawStart: DataType.Double,
+        yawEnd: DataType.Double,
     };
 
     function uwFetchMoveComponent(pointer: JsExternal) {
@@ -383,33 +434,73 @@ function createFetchComponentApi(options: ISharedProps) {
     }
 
     const UwPlayerComponentStruct = {
-        name: DataType.String,
+        name: arrayConstructor({
+            length: 28,
+            dynamicArray: false,
+            type: DataType.U8Array,
+        }),
         nameLength: DataType.I32,
         steamUserId: DataType.I64,
         force: DataType.I32,
-        progress: DataType.Float,
+        progress: DataType.Double,
         ping: DataType.I32,
         state: DataType.I32,
         playerConnectionClass: DataType.I32,
     };
 
-    function uwFetchPlayerComponent(pointer: JsExternal) {
-        return callFetch<IUwPlayerComponent>(
-            'uwFetchPlayerComponent',
-            options,
-            UwPlayerComponentStruct,
-            {
-                name: '',
-                nameLength: 0,
-                steamUserId: 0,
-                force: 0,
-                progress: 0,
-                ping: 0,
-                state: 0,
-                playerConnectionClass: 0,
-            },
-            pointer,
-        );
+    function uwFetchPlayerComponent(pointer: JsExternal): IUwPlayerComponent | null {
+        const fnName = 'uwFetchPlayerComponent';
+        const structType = UwPlayerComponentStruct;
+        const structData = {
+            name: Buffer.alloc(28, '\0'),
+            nameLength: 0,
+            steamUserId: 0,
+            force: 0,
+            progress: 0,
+            ping: 0,
+            state: 0,
+            playerConnectionClass: 0,
+        };
+
+        const structPointer = createPointer({
+            paramsType: [structType],
+            paramsValue: [structData],
+        });
+        let hasComponent = load({
+            ...options,
+            funcName: fnName,
+            retType: DataType.Boolean,
+            paramsType: [DataType.External, DataType.External],
+            paramsValue: [pointer, unwrapPointer(structPointer)[0]],
+            runInNewThread: false,
+        });
+
+        if (options.errno) {
+            console.log(hasComponent);
+            // @ts-ignore
+            hasComponent = hasComponent.value as boolean;
+        }
+
+        type rawData = Omit<IUwPlayerComponent, 'name'> & { name: Buffer };
+        let data: IUwPlayerComponent | null = null;
+        if (hasComponent) {
+            const rawData = restorePointer({
+                retType: [structType],
+                paramsValue: structPointer,
+            })[0] as unknown as rawData;
+
+            data = {
+                ...rawData,
+                name: rawData.name.toString('utf-8', 0, rawData.nameLength),
+            }
+        }
+        freePointer({
+            paramsType: [structType],
+            paramsValue: structPointer,
+            pointerType: PointerType.RsPointer,
+        });
+
+        return data;
     }
 
     const UwForceComponentStruct = {
@@ -508,6 +599,7 @@ function createFetchComponentApi(options: ISharedProps) {
 
     return {
         uwEntityPointer,
+        uwEntityId,
         uwFetchProtoComponent,
         uwFetchOwnerComponent,
         uwFetchControllerComponent,

@@ -33,6 +33,8 @@ import type {
 import { IUWApi } from '../uwApi.type';
 import { ConnectionState, getLibName, MapState, OverviewFlags, Priority, Prototype } from '../helpers';
 import { define } from './ffiRsHelpers';
+import { IEntity } from '../entity.type';
+import createFetchComponentApi from './fetchComponentApi';
 
 const LIBRARY_NAME = 'UNNATURAL_API';
 
@@ -217,7 +219,7 @@ export function createUWApi(steamPath: string, isHardened = false): IUWApi {
         },
         uwSetPlayerColor: {
             retType: DataType.Void,
-            paramsType: [DataType.Float, DataType.Float, DataType.Float],
+            paramsType: [DataType.Double, DataType.Double, DataType.Double],
         },
         uwSetConnectStartGui: {
             retType: DataType.Void,
@@ -280,6 +282,10 @@ export function createUWApi(steamPath: string, isHardened = false): IUWApi {
             retType: DataType.Void,
             paramsType: [DataType.External],
         },
+        uwAllEntities: {
+            retType: DataType.Void,
+            paramsType: [DataType.External],
+        },
         uwConnectionState: {
             retType: DataType.I32,
             paramsType: [],
@@ -303,7 +309,7 @@ export function createUWApi(steamPath: string, isHardened = false): IUWApi {
         },
         uwCommandPlaceConstruction: {
             retType: DataType.Void,
-            paramsType: [DataType.I32, DataType.I32, DataType.Float],
+            paramsType: [DataType.I32, DataType.I32, DataType.Double],
         },
         uwCommandSetRecipe: {
             retType: DataType.Void,
@@ -319,7 +325,7 @@ export function createUWApi(steamPath: string, isHardened = false): IUWApi {
         },
         uwCommandMove: {
             retType: DataType.Void,
-            paramsType: [DataType.I32, DataType.I32, DataType.Float],
+            paramsType: [DataType.I32, DataType.I32, DataType.Double],
         },
         uwCommandAim: {
             retType: DataType.Void,
@@ -361,10 +367,10 @@ export function createUWApi(steamPath: string, isHardened = false): IUWApi {
         uwAreaRange: {
             retType: DataType.Void,
             paramsType: [
-                DataType.Float,
-                DataType.Float,
-                DataType.Float,
-                DataType.Float, // radius
+                DataType.Double,
+                DataType.Double,
+                DataType.Double,
+                DataType.Double, // radius
                 DataType.External,
             ],
         },
@@ -372,7 +378,7 @@ export function createUWApi(steamPath: string, isHardened = false): IUWApi {
             retType: DataType.Void,
             paramsType: [
                 DataType.I32,
-                DataType.Float,
+                DataType.Double,
                 DataType.External,
             ],
         },
@@ -380,7 +386,7 @@ export function createUWApi(steamPath: string, isHardened = false): IUWApi {
             retType: DataType.Void,
             paramsType: [
                 DataType.I32,
-                DataType.Float,
+                DataType.Double,
                 DataType.External,
             ],
         },
@@ -388,20 +394,20 @@ export function createUWApi(steamPath: string, isHardened = false): IUWApi {
             retType: DataType.Void,
             paramsType: [
                 DataType.I32,
-                DataType.Float,
+                DataType.Double,
                 DataType.External,
             ],
         },
         uwTestVisible: {
             retType: DataType.Boolean,
             paramsType: [
-                DataType.Float,
-                DataType.Float,
-                DataType.Float,
+                DataType.Double,
+                DataType.Double,
+                DataType.Double,
                 // second Vec
-                DataType.Float,
-                DataType.Float,
-                DataType.Float,
+                DataType.Double,
+                DataType.Double,
+                DataType.Double,
             ],
         },
         uwTestShooting: {
@@ -414,26 +420,26 @@ export function createUWApi(steamPath: string, isHardened = false): IUWApi {
             ],
         },
         uwDistanceLine: {
-            retType: DataType.Float,
+            retType: DataType.Double,
             paramsType: [
-                DataType.Float,
-                DataType.Float,
-                DataType.Float,
+                DataType.Double,
+                DataType.Double,
+                DataType.Double,
                 // vec2
-                DataType.Float,
-                DataType.Float,
-                DataType.Float,
+                DataType.Double,
+                DataType.Double,
+                DataType.Double,
             ],
         },
         uwDistanceEstimate: {
-            retType: DataType.Float,
+            retType: DataType.Double,
             paramsType: [
                 DataType.I32,
                 DataType.I32,
             ],
         },
         uwYaw: {
-            retType: DataType.Float,
+            retType: DataType.Double,
             paramsType: [
                 DataType.I32,
                 DataType.I32,
@@ -506,6 +512,56 @@ export function createUWApi(steamPath: string, isHardened = false): IUWApi {
             paramsValue: [version],
         });
     };
+
+    async function uwModifiedEntities(): Promise<number[]> {
+        const IdsPointer = createPointer({
+            paramsType: [DataType.I32Array],
+            paramsValue: [[]],
+        });
+
+        const UwIdsStructData = {
+            ids: unwrapPointer(IdsPointer)[0],
+            count: 0,
+        };
+
+        const IdsStructPointer = createPointer({
+            paramsType: [UwIdsStruct],
+            paramsValue: [UwIdsStructData],
+        });
+
+        await uwLib.uwModifiedEntities(unwrapPointer(IdsStructPointer));
+
+        const obj = restorePointer({
+            retType: [UwIdsStruct],
+            paramsValue: IdsStructPointer,
+        })[0] as unknown as { ids: JsExternal, count: number };
+
+        const resultIdsPointer = wrapPointer([obj.ids]);
+
+        const IdsTypeArr = arrayConstructor({
+            length: obj.count,
+            type: DataType.I32Array
+        });
+
+        const ids = restorePointer({
+            retType: [IdsTypeArr],
+            paramsValue: resultIdsPointer,
+        })[0] as unknown as number[];
+
+        freePointer({
+            paramsType: [UwIdsStruct],
+            paramsValue: IdsStructPointer,
+            pointerType: PointerType.RsPointer,
+        });
+
+        return ids;
+    };
+
+    const uwComponentLib = createFetchComponentApi({
+        library: LIBRARY_NAME,
+        runInNewThread: false,
+        errno: false,
+    });
 
     console.log('UW API PREPARED - DONE');
 
@@ -639,49 +695,7 @@ export function createUWApi(steamPath: string, isHardened = false): IUWApi {
             return resultPlayer;
         },
 
-        uwModifiedEntities: async (): Promise<number[]> => {
-            const IdsPointer = createPointer({
-                paramsType: [DataType.I32Array],
-                paramsValue: [[]],
-            });
 
-            const UwIdsStructData = {
-                ids: unwrapPointer(IdsPointer)[0],
-                count: 0,
-            };
-
-            const IdsStructPointer = createPointer({
-                paramsType: [UwIdsStruct],
-                paramsValue: [UwIdsStructData],
-            });
-
-            await uwLib.uwModifiedEntities(unwrapPointer(IdsStructPointer));
-
-            const obj = restorePointer({
-                retType: [UwIdsStruct],
-                paramsValue: IdsStructPointer,
-            })[0] as unknown as { ids: JsExternal, count: number };
-
-            const resultIdsPointer = wrapPointer([obj.ids]);
-
-            const IdsTypeArr = arrayConstructor({
-                length: obj.count,
-                type: DataType.I32Array
-            });
-
-            const ids = restorePointer({
-                retType: [IdsTypeArr],
-                paramsValue: resultIdsPointer,
-            })[0] as unknown as number[];
-
-            freePointer({
-                paramsType: [UwIdsStruct],
-                paramsValue: IdsStructPointer,
-                pointerType: PointerType.RsPointer,
-            });
-
-            return ids;
-        },
 
         uwConnectionState: async (): Promise<ConnectionState> => {
             return uwLib.uwConnectionState() as ConnectionState;
@@ -1203,6 +1217,93 @@ export function createUWApi(steamPath: string, isHardened = false): IUWApi {
             });
 
             return flags;
+        },
+
+        // WORLD FUN
+        uwAllEntities: async (): Promise<number[]> => {
+            const IdsPointer = createPointer({
+                paramsType: [DataType.I32Array],
+                paramsValue: [[]],
+            });
+
+            const UwIdsStructData = {
+                ids: unwrapPointer(IdsPointer)[0],
+                count: 0,
+            };
+
+            const IdsStructPointer = createPointer({
+                paramsType: [UwIdsStruct],
+                paramsValue: [UwIdsStructData],
+            });
+
+            await uwLib.uwAllEntities(unwrapPointer(IdsStructPointer));
+
+            const obj = restorePointer({
+                retType: [UwIdsStruct],
+                paramsValue: IdsStructPointer,
+            })[0] as unknown as { ids: JsExternal, count: number };
+
+            const resultIdsPointer = wrapPointer([obj.ids]);
+
+            const IdsTypeArr = arrayConstructor({
+                length: obj.count,
+                type: DataType.I32Array
+            });
+
+            const ids = restorePointer({
+                retType: [IdsTypeArr],
+                paramsValue: resultIdsPointer,
+            })[0] as unknown as number[];
+
+            freePointer({
+                paramsType: [UwIdsStruct],
+                paramsValue: IdsStructPointer,
+                pointerType: PointerType.RsPointer,
+            });
+
+            return ids;
+        },
+        uwModifiedEntities,
+
+        uwModifiedEntitiesResolved: async (): Promise<IEntity[]> => {
+            const assignProp = <P extends keyof Omit<IEntity, 'id'>>(ent: IEntity, prop: P, value: IEntity[P] | null) => {
+                if (typeof value === 'undefined' || value === null) {
+                    return;
+                }
+                ent[prop] = value;
+            };
+
+            const entityIds = await uwModifiedEntities();
+            const entities = new Array(entityIds.length);
+
+            for (let index = 0; index < entityIds.length; index++) {
+                const id = entityIds[index];
+                const entityPointer = uwComponentLib.uwEntityPointer(id);
+                const entity: IEntity = {
+                    Id: id
+                };
+                assignProp(entity, 'Proto', uwComponentLib.uwFetchProtoComponent(entityPointer));
+                assignProp(entity, 'Owner', uwComponentLib.uwFetchOwnerComponent(entityPointer));
+                assignProp(entity, 'Controller', uwComponentLib.uwFetchControllerComponent(entityPointer));
+                assignProp(entity, 'Position', uwComponentLib.uwFetchPositionComponent(entityPointer));
+                assignProp(entity, 'Unit', uwComponentLib.uwFetchUnitComponent(entityPointer));
+                assignProp(entity, 'Life', uwComponentLib.uwFetchLifeComponent(entityPointer));
+                assignProp(entity, 'Move', uwComponentLib.uwFetchMoveComponent(entityPointer));
+                assignProp(entity, 'Aim', uwComponentLib.uwFetchAimComponent(entityPointer));
+                assignProp(entity, 'Recipe', uwComponentLib.uwFetchRecipeComponent(entityPointer));
+                assignProp(entity, 'UpdateTimestamp', uwComponentLib.uwFetchUpdateTimestampComponent(entityPointer));
+                assignProp(entity, 'RecipeStatistics', uwComponentLib.uwFetchRecipeStatisticsComponent(entityPointer));
+                assignProp(entity, 'Priority', uwComponentLib.uwFetchPriorityComponent(entityPointer));
+                assignProp(entity, 'Amount', uwComponentLib.uwFetchAmountComponent(entityPointer));
+                assignProp(entity, 'Attachment', uwComponentLib.uwFetchAttachmentComponent(entityPointer));
+                assignProp(entity, 'Player', uwComponentLib.uwFetchPlayerComponent(entityPointer));
+                assignProp(entity, 'Force', uwComponentLib.uwFetchForceComponent(entityPointer));
+                assignProp(entity, 'ForceDetails', uwComponentLib.uwFetchForceDetailsComponent(entityPointer));
+                assignProp(entity, 'ForeignPolicy', uwComponentLib.uwFetchForeignPolicyComponent(entityPointer));
+                assignProp(entity, 'DiplomacyProposal', uwComponentLib.uwFetchDiplomacyProposalComponent(entityPointer));
+                entities[index] = entity;
+            }
+            return entities;
         },
 
         // NON UW API

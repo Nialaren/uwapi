@@ -162,7 +162,7 @@ function createUWApi(steamPath: string, isHardened = false): IUWApi {
     //     uwSetPlayerColor: {
     //         library: LIBRARY_NAME,
     //         retType: DataType.Void,
-    //         paramsType: [DataType.Float, DataType.Float, DataType.Float],
+    //         paramsType: [DataType.Double, DataType.Double, DataType.Double],
     //     },
     //     uwSetConnectStartGui: {
     //         library: LIBRARY_NAME,
