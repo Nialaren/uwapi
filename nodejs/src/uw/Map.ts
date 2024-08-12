@@ -183,8 +183,6 @@ class Map {
             tiles.push(tile);
         }
 
-        console.log(tiles);
-
         this._game._logger.log(Severity.Note, 'map loaded');
     }
 
