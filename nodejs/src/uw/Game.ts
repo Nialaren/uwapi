@@ -2,6 +2,7 @@ import { ConnectionState, GameState, MapState, Severity } from './helpers';
 import Commands from './Commands';
 import Map from './Map';
 import Prototypes from './Prototypes';
+import World from './World';
 import { createSimpleLogger } from './helpers/simpleLogger';
 import type {
     IUwShootingArray,
@@ -94,7 +95,7 @@ class Game {
         // OTHER APIS
         this.prototypes = new Prototypes(this.#api, this);
         this.map = new Map(this.#api, this);
-        // this.world = World(self._api, self._ffi, self)
+        this.world = new World(this.#api, this);
         this.commands = new Commands(this.#api);
 
         this._isInitialized = true;
@@ -281,10 +282,6 @@ class Game {
 
             this._isInitialized = false;
         });
-
-
-
-
 
         // this.#cleanExceptionCallback();
         // setTimeout(this.#cleanLogCallback, 100);

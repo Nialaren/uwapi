@@ -1,4 +1,4 @@
-import { Severity, ILogger } from './helpers';
+import { Severity, ILogger } from '../helpers';
 
 export function createSimpleLogger(): ILogger {
     return {

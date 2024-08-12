@@ -1,3 +1,4 @@
+import { IEntity } from './entity.type';
 import { ConnectionState, MapState, OverviewFlags, Priority, Severity } from './helpers';
 import type {
     UwLogCallbackType,
@@ -44,9 +45,6 @@ export interface IUWApi {
 
     // my player
     uwMyPlayer: () => Promise<IUwMyPlayer>;
-
-    // entities
-    uwModifiedEntities: ()  => Promise<number[]>;
 
     uwConnectionState: () => Promise<ConnectionState>;
 
@@ -99,6 +97,8 @@ export interface IUWApi {
 
     // WORLD FUNS
     uwAllEntities: () => Promise<number[]>;
+    uwModifiedEntities: () => Promise<number[]>;
+    uwModifiedEntitiesResolved: () => Promise<IEntity[]>;
 
     // COMPONENT FUN
 

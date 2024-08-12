@@ -1,3 +1,5 @@
+import { IEntity } from './entity.type';
+
 export enum Severity {
     Note = 0,
     Hint = 1,
@@ -119,9 +121,36 @@ export enum ForeignPolicyEnum {
     Enemy = 4,
 };
 
+
+export const ENTITY_ATTRIBUTES = Object.freeze(<const>[
+    'Proto',
+    'Owner',
+    'Controller',
+    'Position',
+    'Unit',
+    'Life',
+    'Move',
+    'Aim',
+    'Recipe',
+    'UpdateTimestamp',
+    'RecipeStatistics',
+    'Priority',
+    'Amount',
+    'Attachment',
+    'Player',
+    'Force',
+    'ForceDetails',
+    'ForeignPolicy',
+    'DiplomacyProposal',
+]);
+
 export interface ILogger {
     log: (severity: Severity, message: string, extra?: any) => void;
     error: (message: string, extra?: any) => void;
+}
+
+export function isKeyDefined(obj: IEntity, key: keyof IEntity) {
+    return key in obj && typeof obj[key] !== 'undefined' && obj[key] !== null;
 }
 
 export function getLibName(isHardened = false) {
